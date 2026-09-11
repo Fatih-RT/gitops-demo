@@ -83,6 +83,16 @@ Nettoyage : `./scripts/99-cleanup.sh` (ajouter `--all` pour supprimer aussi Argo
   commit, ce qui est un vecteur classique d'attaque sur la chaîne d'approvisionnement.
 - **`prune` et `selfHeal`** : aucune modification manuelle du cluster ne survit à la réconciliation.
 
+## État de validation
+
+| Élément | État |
+| --- | --- |
+| Manifests `app/` | validés contre les schémas stricts Kubernetes 1.29 |
+| Workflow GitHub Actions | validé contre le schéma GitHub, et exécuté en CI au vert |
+| Scans Trivy des deux images | exécutés réellement dans la CI, chiffres relevés dans `docs/TP3-trivy.md` |
+| Scripts `scripts/` | syntaxe vérifiée, exécution à faire sur la VM Ubuntu |
+| Déploiement Minikube et ArgoCD | à exécuter sur la VM, captures d'écran à joindre |
+
 ## Pour aller plus loin
 
 - Remplacer le polling ArgoCD par un webhook GitHub pour une synchronisation immédiate.

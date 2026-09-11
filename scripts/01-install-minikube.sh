@@ -7,6 +7,7 @@ set -euo pipefail
 CRICTL_VERSION="v1.29.0"
 CNI_VERSION="v1.1.1"
 K8S_VERSION="v1.29.0"
+GO_VERSION="1.24.9"   # version minimale exigee par le go.mod de cri-dockerd
 
 echo "==> 1. Mise a jour systeme"
 sudo apt update && sudo apt upgrade -y
@@ -38,7 +39,20 @@ if [ ! -d "$HOME/cri-dockerd" ]; then
 fi
 pushd "$HOME/cri-dockerd" >/dev/null
 mkdir -p bin
-go build -o bin/cri-dockerd          # environ 2 minutes
+# Ubuntu 25.04 fournit Go 1.24.2, alors que le go.mod de cri-dockerd exige 1.24.9.
+# GOTOOLCHAIN=auto laisse Go telecharger la version exacte demandee ; si la
+# distribution impose la version locale, on installe Go depuis l'archive officielle.
+export GOTOOLCHAIN=auto
+if ! go build -o bin/cri-dockerd; then   # environ 2 minutes
+  echo "==> Go trop ancien, installation de Go ${GO_VERSION} depuis go.dev"
+  wget -q "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz"
+  sudo rm -rf /usr/local/go
+  sudo tar -C /usr/local -xzf "go${GO_VERSION}.linux-amd64.tar.gz"
+  rm -f "go${GO_VERSION}.linux-amd64.tar.gz"
+  export PATH="/usr/local/go/bin:$PATH"
+  go version
+  go build -o bin/cri-dockerd
+fi
 sudo mkdir -p /usr/local/bin
 sudo install bin/cri-dockerd /usr/local/bin/
 sudo cp -a packaging/systemd/* /etc/systemd/system

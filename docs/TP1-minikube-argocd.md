@@ -181,3 +181,4 @@ Deux applications `Synced` / `Healthy` dans ArgoCD, et deux Guestbook accessible
 | `permission denied` sur `~/.kube/config` | fichiers créés par root avec le driver `none` | `chown` puis `sed` du chemin `/root/.minikube` |
 | `docker: permission denied` | groupe `docker` pas encore appliqué | se déconnecter / reconnecter |
 | Pods `ContainerCreating` sans fin | plugins CNI absents | installer les plugins CNI dans `/opt/cni/bin` |
+| `go.mod requires go >= 1.24.9` à la compilation de cri-dockerd | Ubuntu 25.04 fournit Go 1.24.2 | `export GOTOOLCHAIN=auto`, ou installer Go depuis go.dev ; le script d'installation gère les deux cas |
