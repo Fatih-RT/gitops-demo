@@ -11,25 +11,26 @@ proxmox_api_token_secret: "{{ lookup('env', 'PROXMOX_TOKEN_SECRET') }}"
 # A passer a true des que le noeud presente un certificat reconnu.
 proxmox_validate_certs: false
 
-# Emplacement et gabarit
+# Emplacement et gabarit, releves sur le noeud le 11 septembre 2026
 proxmox_node: pve
 vm_template: ubuntu-2504-cloudinit
-vm_storage: local-lvm
+vm_storage: local-lvm # 766 Gio disponibles
 vm_bridge: vmbr0
 
 # Machine virtuelle du TP
 vm_id: 9101
 vm_name: devsecops-tp
-vm_cores: 4
-vm_memory: 8192 # Mio
+vm_cores: 4 # le noeud en compte 12
+vm_memory: 6144 # Mio, sur 13 Gio libres au moment du releve
 vm_disk: scsi0
 vm_disk_size: 50G
 
 # Reseau : adresse fixe conseillee, le Service NodePort du TP2 s'appuie dessus.
+# 192.168.1.50 et .51 repondaient deja au ping, .60 etait libre.
 # Pour du DHCP, mettre vm_ip a "dhcp" et passer l'adresse obtenue au playbook :
-#   ansible-playbook site.yml -e vm_address=192.168.1.50
-vm_ip: 192.168.1.50/24
-vm_gateway: 192.168.1.1
+#   ansible-playbook site.yml -e vm_address=192.168.1.60
+vm_ip: 192.168.1.60/24
+vm_gateway: 192.168.1.254
 vm_nameservers:
   - 1.1.1.1
 
