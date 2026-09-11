@@ -17,8 +17,14 @@ Séparer les deux périmètres, car ils ne se corrigent pas de la même façon :
 | node-vulnerable | | |
 | node-fixed | | |
 
-Relevé de la CI du 11 septembre 2026 sur `node-fixed` : 0 CRITICAL et 0 HIGH côté système
-(Alpine 3.23.4), mais 1 CRITICAL et 19 HIGH côté bibliothèques npm embarquées.
+Relevé de la CI du 11 septembre 2026, à titre de comparaison :
+
+| Image | Périmètre | CRITICAL | HIGH | MEDIUM | LOW | Total |
+| --- | --- | --- | --- | --- | --- | --- |
+| node-vulnerable | système (Alpine 3.15.4) | 1 | 8 | 14 | 0 | 23 |
+| node-vulnerable | bibliothèques | 4 | 26 | 13 | 2 | 45 |
+| node-fixed | système (Alpine 3.23.4) | 0 | 0 | 0 | 0 | 0 |
+| node-fixed | bibliothèques | 1 | 19 | 0 | 0 | 20 |
 
 Version de Trivy utilisée : `trivy --version` → ...
 Date du scan : ...

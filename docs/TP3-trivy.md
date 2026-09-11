@@ -61,12 +61,20 @@ Le résultat attendu est zéro vulnérabilité critique, ou un nombre très réd
 
 ### Résultat observé dans la CI de ce dépôt
 
-Le scan lancé par GitHub Actions le 11 septembre 2026 sur `node-fixed` donne deux constats opposés :
+Scans lancés par GitHub Actions le 11 septembre 2026
+([run 34571860131](https://github.com/Fatih-RT/gitops-demo/actions/runs/34571860131)) :
 
-| Périmètre | CRITICAL | HIGH |
-| --- | --- | --- |
-| Paquets système (Alpine 3.23.4) | 0 | 0 |
-| Dépendances npm embarquées dans l'image | 1 | 19 |
+| Image | Périmètre | CRITICAL | HIGH | MEDIUM | LOW | Total |
+| --- | --- | --- | --- | --- | --- | --- |
+| node-vulnerable | système (Alpine 3.15.4) | 1 | 8 | 14 | 0 | 23 |
+| node-vulnerable | bibliothèques embarquées | 4 | 26 | 13 | 2 | 45 |
+| node-fixed | système (Alpine 3.23.4) | 0 | 0 | 0 | 0 | 0 |
+| node-fixed | bibliothèques embarquées | 1 | 19 | 0 | 0 | 20 |
+
+Côté système, la correction est totale : 23 vulnérabilités deviennent 0, dont la disparition de la
+seule critique. Côté bibliothèques, le total passe de 45 à 20, mais il ne tombe pas à zéro.
+
+Les chiffres relevés sur la VM différeront légèrement : la base de CVE de Trivy évolue chaque jour.
 
 La couche système est propre : la mise à jour de la base a fait son travail. En revanche, le npm
 livré dans l'image officielle embarque des bibliothèques JavaScript vulnérables, dont `tar` en

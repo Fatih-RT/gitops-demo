@@ -1,5 +1,7 @@
 # gitops-demo — Module DevSecOps (TP1, TP2, TP3)
 
+[![Scan de sécurité (Trivy)](https://github.com/Fatih-RT/gitops-demo/actions/workflows/trivy-scan.yml/badge.svg)](https://github.com/Fatih-RT/gitops-demo/actions/workflows/trivy-scan.yml)
+
 Dépôt de rendu du module DevSecOps : cluster Kubernetes local, livraison GitOps avec ArgoCD et
 analyse de vulnérabilités de conteneurs avec Trivy.
 
