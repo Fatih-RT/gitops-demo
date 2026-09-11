@@ -74,8 +74,9 @@ Nettoyage : `./scripts/99-cleanup.sh` (ajouter `--all` pour supprimer aussi Argo
 - **Mot de passe admin initial à changer**, puis suppression du secret `argocd-initial-admin-secret`.
 - **Aucun secret dans le dépôt** : les clés SSH sont exclues par `.gitignore` et la clé privée n'est
   déclarée que dans ArgoCD.
-- **Porte de sécurité en CI** : le workflow Trivy échoue si l'image corrigée contient encore une
-  vulnérabilité critique ou élevée disposant d'un correctif.
+- **Porte de sécurité en CI** : le workflow Trivy échoue si l'image corrigée contient encore un
+  paquet système critique ou élevé disposant d'un correctif. Les vulnérabilités des bibliothèques
+  embarquées sont affichées séparément, car elles ne se corrigent pas en changeant d'image de base.
 - **Actions GitHub épinglées au commit** et non à un tag : un tag peut être redéplacé vers un autre
   commit, ce qui est un vecteur classique d'attaque sur la chaîne d'approvisionnement.
 - **`prune` et `selfHeal`** : aucune modification manuelle du cluster ne survit à la réconciliation.

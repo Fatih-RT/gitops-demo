@@ -59,6 +59,25 @@ sudo trivy image node-fixed
 
 Le résultat attendu est zéro vulnérabilité critique, ou un nombre très réduit.
 
+### Résultat observé dans la CI de ce dépôt
+
+Le scan lancé par GitHub Actions le 11 septembre 2026 sur `node-fixed` donne deux constats opposés :
+
+| Périmètre | CRITICAL | HIGH |
+| --- | --- | --- |
+| Paquets système (Alpine 3.23.4) | 0 | 0 |
+| Dépendances npm embarquées dans l'image | 1 | 19 |
+
+La couche système est propre : la mise à jour de la base a fait son travail. En revanche, le npm
+livré dans l'image officielle embarque des bibliothèques JavaScript vulnérables, dont `tar` en
+CVE-2026-59873 (déni de service par archive gzip piégée, sévérité CRITICAL), ainsi que `minimatch`,
+`brace-expansion`, `glob`, `cross-spawn` et `sigstore`.
+
+Enseignement principal du TP : **changer d'image de base corrige le système, pas les dépendances
+applicatives**. Il faut les deux, analyse d'image et analyse de composants (SCA), sur des
+périmètres distincts. C'est pourquoi le workflow sépare les deux scans, bloquant sur le système,
+informatif sur les bibliothèques, le temps de traiter ces dépendances à la source.
+
 ## Étape 3 — Comparaison
 
 Le script [`trivy/scan.sh`](../trivy/scan.sh) enchaîne les deux builds, les deux scans, écrit les
@@ -98,9 +117,11 @@ Trois cas concrets rencontrés dans ce type d'image :
 ## Intégration CI — le scan comme garde-fou
 
 Le workflow [`.github/workflows/trivy-scan.yml`](../.github/workflows/trivy-scan.yml) rejoue ce TP à
-chaque push : il construit les deux images, scanne l'image corrigée et fait échouer le job si une
-vulnérabilité `CRITICAL` ou `HIGH` corrigeable est détectée. Il scanne aussi les manifests
-Kubernetes du dossier `app/` pour les erreurs de configuration.
+chaque push : il construit les deux images, scanne l'image corrigée et fait échouer le job si un
+paquet système `CRITICAL` ou `HIGH` disposant d'un correctif est détecté. Les vulnérabilités des
+bibliothèques embarquées sont affichées sans bloquer, et les manifests Kubernetes du dossier `app/`
+sont analysés pour les erreurs de configuration. Un scan hebdomadaire est également planifié, car de
+nouvelles CVE apparaissent sur une image qui n'a pourtant pas changé.
 
 C'est la traduction concrète du *shift left* : la vulnérabilité est détectée au commit, pas en
 production.

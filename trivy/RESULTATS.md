@@ -10,6 +10,16 @@ Les rapports complets se trouvent dans `trivy/rapports/` (dossier non versionné
 | node-vulnerable | node:12-alpine | | | | | |
 | node-fixed | node:20-alpine + apk upgrade | | | | | |
 
+Séparer les deux périmètres, car ils ne se corrigent pas de la même façon :
+
+| Image | Paquets système | Bibliothèques embarquées |
+| --- | --- | --- |
+| node-vulnerable | | |
+| node-fixed | | |
+
+Relevé de la CI du 11 septembre 2026 sur `node-fixed` : 0 CRITICAL et 0 HIGH côté système
+(Alpine 3.23.4), mais 1 CRITICAL et 19 HIGH côté bibliothèques npm embarquées.
+
 Version de Trivy utilisée : `trivy --version` → ...
 Date du scan : ...
 

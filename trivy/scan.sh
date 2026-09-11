@@ -20,21 +20,26 @@ done
 
 echo
 echo "==> Comparaison du nombre de vulnerabilites par severite"
-printf '%-18s %8s %8s %8s %8s\n' IMAGE CRITICAL HIGH MEDIUM LOW
+echo "    (systeme = paquets Alpine, bibliotheques = dependances embarquees type npm)"
 for image in node-vulnerable node-fixed; do
-  read -r crit high med low < <(
-    python3 - "rapports/${image}.json" <<'PY'
+  python3 - "rapports/${image}.json" "${image}" <<'PY'
 import json, sys
 from collections import Counter
+
 data = json.load(open(sys.argv[1]))
-c = Counter()
+image = sys.argv[2]
+counts = {"systeme": Counter(), "bibliotheques": Counter()}
+
 for res in data.get("Results") or []:
+    groupe = "systeme" if res.get("Class") == "os-pkgs" else "bibliotheques"
     for v in res.get("Vulnerabilities") or []:
-        c[v["Severity"]] += 1
-print(c["CRITICAL"], c["HIGH"], c["MEDIUM"], c["LOW"])
+        counts[groupe][v["Severity"]] += 1
+
+print(f"\n{image}")
+print(f"{'PERIMETRE':<16}{'CRITICAL':>10}{'HIGH':>8}{'MEDIUM':>8}{'LOW':>8}")
+for groupe, c in counts.items():
+    print(f"{groupe:<16}{c['CRITICAL']:>10}{c['HIGH']:>8}{c['MEDIUM']:>8}{c['LOW']:>8}")
 PY
-  )
-  printf '%-18s %8s %8s %8s %8s\n' "${image}" "${crit}" "${high}" "${med}" "${low}"
 done
 
 echo
