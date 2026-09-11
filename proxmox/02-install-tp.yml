@@ -63,9 +63,12 @@
       register: tp1_cluster
       changed_when: tp1_cluster.rc == 0
 
-    - name: Vérifier la présence du namespace argocd
-      ansible.builtin.command: kubectl get namespace argocd
-      register: argocd_ns
+    - name: Vérifier qu'ArgoCD est installé au complet
+      # Le namespace ne prouve rien : une installation interrompue le crée quand
+      # même. La définition de ressource applicationsets est la dernière posée,
+      # donc sa présence atteste que l'installation est allée au bout.
+      ansible.builtin.command: kubectl get crd applicationsets.argoproj.io
+      register: argocd_crd
       changed_when: false
       failed_when: false
 
@@ -73,7 +76,7 @@
       ansible.builtin.command: ./scripts/02-install-argocd.sh
       args:
         chdir: "{{ repo_dest }}"
-      when: argocd_ns.rc != 0
+      when: argocd_crd.rc != 0
       changed_when: true
 
     - name: "TP1 et TP2 - applications ArgoCD déclaratives"
