@@ -76,6 +76,8 @@ Nettoyage : `./scripts/99-cleanup.sh` (ajouter `--all` pour supprimer aussi Argo
   déclarée que dans ArgoCD.
 - **Porte de sécurité en CI** : le workflow Trivy échoue si l'image corrigée contient encore une
   vulnérabilité critique ou élevée disposant d'un correctif.
+- **Actions GitHub épinglées au commit** et non à un tag : un tag peut être redéplacé vers un autre
+  commit, ce qui est un vecteur classique d'attaque sur la chaîne d'approvisionnement.
 - **`prune` et `selfHeal`** : aucune modification manuelle du cluster ne survit à la réconciliation.
 
 ## Pour aller plus loin
