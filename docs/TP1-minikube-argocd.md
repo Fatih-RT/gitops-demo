@@ -8,9 +8,22 @@ Script correspondant : [`scripts/01-install-minikube.sh`](../scripts/01-install-
 
 ## Prérequis
 
-- VM Ubuntu 25.04 avec la virtualisation imbriquée activée dans VMware.
-- VMware Tools installés : `sudo apt-get install open-vm-tools open-vm-tools-desktop`.
-- Un utilisateur normal membre du groupe `sudo`.
+- VM Ubuntu 25.04, un utilisateur normal membre du groupe `sudo`.
+- Outils invités selon l'hyperviseur : `open-vm-tools` sur VMware, `qemu-guest-agent` sur
+  Proxmox et KVM. Le script d'installation détecte l'hyperviseur et choisit le bon paquet.
+- Le driver `none` exécute Kubernetes directement dans la VM, sans machine virtuelle imbriquée.
+  La virtualisation imbriquée n'est donc pas nécessaire, contrairement au driver `docker` ou `kvm2`.
+
+### Dimensionnement de la VM
+
+| Ressource | Minimum | Confortable |
+| --- | --- | --- |
+| vCPU | 2 | 4 |
+| Mémoire | 4 Go | 8 Go |
+| Disque | 30 Go | 50 Go |
+
+Sur Proxmox, choisir le type de processeur `host` pour que la VM expose les jeux d'instructions
+réels, et le contrôleur disque `VirtIO SCSI` pour les performances.
 
 ## 1. Préparation du système
 

@@ -13,8 +13,24 @@ echo "==> 1. Mise a jour systeme"
 sudo apt update && sudo apt upgrade -y
 
 echo "==> 2. Dependances"
-sudo apt install -y curl wget apt-transport-https conntrack socat gpg lsb-release \
-  open-vm-tools open-vm-tools-desktop
+sudo apt install -y curl wget apt-transport-https conntrack socat gpg lsb-release
+
+# Les outils invites dependent de l'hyperviseur : VMware Tools sur VMware,
+# qemu-guest-agent sur Proxmox/KVM. Installer les deux n'aurait pas de sens.
+case "$(systemd-detect-virt)" in
+  vmware)
+    echo "    hyperviseur VMware detecte : installation de open-vm-tools"
+    sudo apt install -y open-vm-tools open-vm-tools-desktop
+    ;;
+  kvm | qemu)
+    echo "    hyperviseur KVM/Proxmox detecte : installation de qemu-guest-agent"
+    sudo apt install -y qemu-guest-agent
+    sudo systemctl enable --now qemu-guest-agent
+    ;;
+  *)
+    echo "    hyperviseur non reconnu, aucun agent invite installe"
+    ;;
+esac
 
 echo "==> 3. Desactivation du swap (kubelet refuse de demarrer sinon)"
 sudo swapoff -a
