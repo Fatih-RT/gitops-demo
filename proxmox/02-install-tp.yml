@@ -1,0 +1,115 @@
+---
+- name: Installer les TP DevSecOps dans la VM
+  hosts: tp_vm
+  gather_facts: true
+  vars:
+    repo_dest: "/home/{{ ansible_user }}/gitops-demo"
+
+  tasks:
+    - name: Attendre que la VM réponde
+      ansible.builtin.wait_for_connection:
+        timeout: 600
+
+    - name: Installer git
+      become: true
+      ansible.builtin.apt:
+        name: git
+        update_cache: true
+      retries: 5 # cloud-init peut encore tenir le verrou apt au premier démarrage
+      delay: 20
+      register: apt_git
+      until: apt_git is succeeded
+
+    - name: Récupérer le dépôt des TP
+      ansible.builtin.git:
+        repo: "{{ tp_repo_url }}"
+        dest: "{{ repo_dest }}"
+        version: main
+
+    - name: Rendre les scripts exécutables
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: "0755"
+      loop:
+        - "{{ repo_dest }}/scripts/01-install-minikube.sh"
+        - "{{ repo_dest }}/scripts/02-install-argocd.sh"
+        - "{{ repo_dest }}/trivy/scan.sh"
+
+    # Compte entre 15 et 25 minutes : compilation de cri-dockerd et démarrage du cluster.
+    - name: "TP1 - cluster Minikube (long)"
+      ansible.builtin.command: ./scripts/01-install-minikube.sh
+      args:
+        chdir: "{{ repo_dest }}"
+        creates: "/home/{{ ansible_user }}/.kube/config"
+      environment:
+        USER: "{{ ansible_user }}"
+      register: tp1_cluster
+      changed_when: tp1_cluster.rc == 0
+
+    - name: Vérifier la présence du namespace argocd
+      ansible.builtin.command: kubectl get namespace argocd
+      register: argocd_ns
+      changed_when: false
+      failed_when: false
+
+    - name: "TP1 - installation d'ArgoCD"
+      ansible.builtin.command: ./scripts/02-install-argocd.sh
+      args:
+        chdir: "{{ repo_dest }}"
+      when: argocd_ns.rc != 0
+      changed_when: true
+
+    - name: "TP1 et TP2 - applications ArgoCD déclaratives"
+      # Pas besoin de la CLI ni d'un port-forward : les Application sont des
+      # objets Kubernetes comme les autres.
+      ansible.builtin.command: kubectl apply -n argocd -f argocd/
+      args:
+        chdir: "{{ repo_dest }}"
+      register: argocd_apps
+      changed_when: "'created' in argocd_apps.stdout or 'configured' in argocd_apps.stdout"
+
+    - name: "TP3 - installation de Trivy"
+      become: true
+      ansible.builtin.shell: >-
+        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh
+        | sh -s -- -b /usr/local/bin
+      args:
+        creates: /usr/local/bin/trivy
+
+    - name: "TP3 - build et scan des deux images"
+      ansible.builtin.command: ./trivy/scan.sh
+      args:
+        chdir: "{{ repo_dest }}"
+      register: trivy_scan
+      changed_when: true
+
+    - name: Rapatrier les rapports Trivy
+      ansible.builtin.fetch:
+        src: "{{ repo_dest }}/trivy/rapports/{{ item }}"
+        dest: "rapports/"
+        flat: true
+      loop:
+        - node-vulnerable.txt
+        - node-fixed.txt
+      failed_when: false
+
+    - name: Récupérer le mot de passe admin d'ArgoCD
+      ansible.builtin.shell: >-
+        kubectl get secret argocd-initial-admin-secret -n argocd
+        -o jsonpath="{.data.password}" | base64 -d
+      register: argocd_password
+      changed_when: false
+      failed_when: false
+
+    - name: Comparaison des scans
+      ansible.builtin.debug:
+        var: trivy_scan.stdout_lines
+
+    - name: Accès aux applications
+      ansible.builtin.debug:
+        msg:
+          - "ArgoCD : ssh -L 8888:localhost:8888 {{ ansible_user }}@{{ ansible_host }} puis
+             kubectl port-forward svc/argocd-server -n argocd 8888:80"
+          - "Identifiants ArgoCD : admin / {{ argocd_password.stdout | default('voir le secret argocd-initial-admin-secret') }}"
+          - "Application NGINX du TP2 : http://{{ ansible_host }}:30080"
+          - "Les deux Guestbook sont en synchronisation manuelle : cliquer sur SYNC dans ArgoCD."

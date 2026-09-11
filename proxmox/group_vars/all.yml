@@ -1,0 +1,41 @@
+---
+# Connexion a l'API Proxmox.
+# Les identifiants ne sont JAMAIS ecrits ici : ils sont lus dans l'environnement
+# au moment de l'execution, pour qu'aucun secret n'entre dans le depot Git.
+proxmox_api_host: "{{ lookup('env', 'PROXMOX_HOST') }}"
+proxmox_api_user: "{{ lookup('env', 'PROXMOX_USER') | default('root@pam', true) }}"
+proxmox_api_token_id: "{{ lookup('env', 'PROXMOX_TOKEN_ID') }}"
+proxmox_api_token_secret: "{{ lookup('env', 'PROXMOX_TOKEN_SECRET') }}"
+
+# Proxmox utilise un certificat auto-signe par defaut.
+# A passer a true des que le noeud presente un certificat reconnu.
+proxmox_validate_certs: false
+
+# Emplacement et gabarit
+proxmox_node: pve
+vm_template: ubuntu-2504-cloudinit
+vm_storage: local-lvm
+vm_bridge: vmbr0
+
+# Machine virtuelle du TP
+vm_id: 9101
+vm_name: devsecops-tp
+vm_cores: 4
+vm_memory: 8192 # Mio
+vm_disk: scsi0
+vm_disk_size: 50G
+
+# Reseau : adresse fixe conseillee, le Service NodePort du TP2 s'appuie dessus.
+# Pour du DHCP, mettre vm_ip a "dhcp" et passer l'adresse obtenue au playbook :
+#   ansible-playbook site.yml -e vm_address=192.168.1.50
+vm_ip: 192.168.1.50/24
+vm_gateway: 192.168.1.1
+vm_nameservers:
+  - 1.1.1.1
+
+# Compte cree par cloud-init dans la VM
+vm_user: fatih
+ssh_public_key_file: ~/.ssh/id_ed25519.pub
+
+# Depot des TP, clone puis execute dans la VM
+tp_repo_url: https://github.com/Fatih-RT/gitops-demo.git

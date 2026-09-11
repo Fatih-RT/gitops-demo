@@ -12,3 +12,6 @@ kubeconfig
 # Divers
 .DS_Store
 *.log
+
+# Rapports rapatries depuis la VM
+proxmox/rapports/

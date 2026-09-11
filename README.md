@@ -29,9 +29,21 @@ Repères de cours et panorama d'outils : [docs/outils-devsecops.md](docs/outils-
 ├── argocd/                   # Application ArgoCD en mode déclaratif
 ├── trivy/                    # Dockerfiles vulnérable / corrigé + script de scan
 ├── scripts/                  # installation et déploiement automatisés
+├── proxmox/                  # création de la VM sur Proxmox et installation des TP
 ├── docs/                     # comptes rendus des TP
 └── .github/workflows/        # porte de sécurité Trivy en CI
 ```
+
+## Déploiement automatisé sur Proxmox
+
+Le dossier [`proxmox/`](proxmox/) contient l'automatisation Ansible qui crée la VM depuis un
+template cloud-init, puis y déroule les trois TP, jusqu'aux scans Trivy rapatriés en local.
+
+```bash
+cd proxmox && ansible-playbook site.yml
+```
+
+Prérequis et création du jeton d'API : [`proxmox/README.md`](proxmox/README.md).
 
 ## Flux GitOps mis en place
 
@@ -91,6 +103,7 @@ Nettoyage : `./scripts/99-cleanup.sh` (ajouter `--all` pour supprimer aussi Argo
 | Workflow GitHub Actions | validé contre le schéma GitHub, et exécuté en CI au vert |
 | Scans Trivy des deux images | exécutés réellement dans la CI, chiffres relevés dans `docs/TP3-trivy.md` |
 | Scripts `scripts/` | syntaxe vérifiée, exécution à faire sur la VM Ubuntu |
+| Playbooks `proxmox/` | syntaxe et arguments de modules vérifiés, jamais exécutés contre un vrai Proxmox |
 | Déploiement Minikube et ArgoCD | à exécuter sur la VM, captures d'écran à joindre |
 
 ## Pour aller plus loin

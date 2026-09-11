@@ -1,0 +1,4 @@
+---
+# Chaîne complète : création de la VM sur Proxmox, puis installation des trois TP.
+- ansible.builtin.import_playbook: 01-create-vm.yml
+- ansible.builtin.import_playbook: 02-install-tp.yml

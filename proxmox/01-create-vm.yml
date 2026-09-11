@@ -1,0 +1,126 @@
+---
+- name: Créer la VM du TP DevSecOps sur Proxmox
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Vérifier que les identifiants API sont présents dans l'environnement
+      ansible.builtin.assert:
+        that:
+          - proxmox_api_host | length > 0
+          - proxmox_api_token_id | length > 0
+          - proxmox_api_token_secret | length > 0
+        fail_msg: >-
+          Exporter PROXMOX_HOST, PROXMOX_TOKEN_ID et PROXMOX_TOKEN_SECRET avant de lancer le
+          playbook. Ces valeurs ne doivent jamais être écrites dans un fichier du dépôt.
+
+    - name: Chercher une VM existante portant ce nom
+      community.proxmox.proxmox_vm_info:
+        api_host: "{{ proxmox_api_host }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_token_id: "{{ proxmox_api_token_id }}"
+        api_token_secret: "{{ proxmox_api_token_secret }}"
+        validate_certs: "{{ proxmox_validate_certs }}"
+        node: "{{ proxmox_node }}"
+        type: qemu
+        name: "{{ vm_name }}"
+      register: existing_vm
+      failed_when: false
+
+    - name: Cloner le template cloud-init
+      community.proxmox.proxmox_kvm:
+        api_host: "{{ proxmox_api_host }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_token_id: "{{ proxmox_api_token_id }}"
+        api_token_secret: "{{ proxmox_api_token_secret }}"
+        validate_certs: "{{ proxmox_validate_certs }}"
+        node: "{{ proxmox_node }}"
+        clone: "{{ vm_template }}"
+        newid: "{{ vm_id }}"
+        name: "{{ vm_name }}"
+        full: true
+        storage: "{{ vm_storage }}"
+        timeout: 600
+      register: vm_clone
+      when: (existing_vm.proxmox_vms | default([]) | length) == 0
+
+    - name: Agrandir le disque système
+      # L'image cloud Ubuntu fait environ 3,5 Go : sans cette étape, le cluster
+      # sature le disque dès le téléchargement des images de conteneurs.
+      community.proxmox.proxmox_disk:
+        api_host: "{{ proxmox_api_host }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_token_id: "{{ proxmox_api_token_id }}"
+        api_token_secret: "{{ proxmox_api_token_secret }}"
+        validate_certs: "{{ proxmox_validate_certs }}"
+        vmid: "{{ vm_id }}"
+        disk: "{{ vm_disk }}"
+        size: "{{ vm_disk_size }}"
+        state: resized
+      when: vm_clone is changed
+
+    - name: Appliquer le matériel et la configuration cloud-init
+      community.proxmox.proxmox_kvm:
+        api_host: "{{ proxmox_api_host }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_token_id: "{{ proxmox_api_token_id }}"
+        api_token_secret: "{{ proxmox_api_token_secret }}"
+        validate_certs: "{{ proxmox_validate_certs }}"
+        node: "{{ proxmox_node }}"
+        vmid: "{{ vm_id }}"
+        name: "{{ vm_name }}"
+        update: true
+        cores: "{{ vm_cores }}"
+        memory: "{{ vm_memory }}"
+        cpu: host # expose les instructions réelles du processeur au noyau invité
+        agent: "enabled=1" # qemu-guest-agent, installé ensuite par le script du TP1
+        onboot: true
+        ciuser: "{{ vm_user }}"
+        sshkeys: "{{ lookup('file', ssh_public_key_file) }}"
+        nameservers: "{{ vm_nameservers }}"
+        ipconfig:
+          ipconfig0: "{{ 'ip=dhcp' if vm_ip == 'dhcp' else 'ip=' ~ vm_ip ~ ',gw=' ~ vm_gateway }}"
+
+    - name: Démarrer la VM
+      community.proxmox.proxmox_kvm:
+        api_host: "{{ proxmox_api_host }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_token_id: "{{ proxmox_api_token_id }}"
+        api_token_secret: "{{ proxmox_api_token_secret }}"
+        validate_certs: "{{ proxmox_validate_certs }}"
+        node: "{{ proxmox_node }}"
+        vmid: "{{ vm_id }}"
+        state: started
+
+    - name: Déterminer l'adresse de la VM
+      ansible.builtin.set_fact:
+        vm_address: "{{ vm_address | default(vm_ip | regex_replace('/.*$', '')) }}"
+
+    - name: Refuser de continuer si l'adresse est inconnue
+      ansible.builtin.assert:
+        that:
+          - vm_address != 'dhcp'
+        fail_msg: >-
+          En DHCP, relever l'adresse de la VM dans Proxmox puis relancer avec
+          -e vm_address=<adresse>.
+
+    - name: Attendre l'ouverture du port SSH
+      ansible.builtin.wait_for:
+        host: "{{ vm_address }}"
+        port: 22
+        timeout: 600
+        delay: 15
+
+    - name: Ajouter la VM à l'inventaire de la session
+      ansible.builtin.add_host:
+        name: "{{ vm_name }}"
+        groups: tp_vm
+        ansible_host: "{{ vm_address }}"
+        ansible_user: "{{ vm_user }}"
+        # accept-new fait confiance à la clé au premier contact, puis la vérifie.
+        ansible_ssh_common_args: -o StrictHostKeyChecking=accept-new
+
+    - name: Résumé
+      ansible.builtin.debug:
+        msg: "VM {{ vm_name }} (id {{ vm_id }}) joignable en SSH sur {{ vm_address }}"
