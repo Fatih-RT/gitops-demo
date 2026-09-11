@@ -1,0 +1,4 @@
+# Dockerfile.fixed
+# Image de base maintenue + mise a jour des paquets Alpine au build.
+FROM node:20-alpine
+RUN apk upgrade --no-cache

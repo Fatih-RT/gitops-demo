@@ -1,0 +1,14 @@
+# Rapports de scan générés localement
+trivy/rapports/
+
+# Secrets : rien de tout cela ne doit entrer dans le dépôt
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+kubeconfig
+.env
+
+# Divers
+.DS_Store
+*.log

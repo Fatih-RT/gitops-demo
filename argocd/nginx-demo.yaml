@@ -1,0 +1,24 @@
+# TP2 - Application ArgoCD declarative (equivalent de `argocd app create nginx-demo ...`)
+# Appliquer avec : kubectl apply -n argocd -f argocd/nginx-demo.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nginx-demo
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Fatih-RT/gitops-demo.git
+    targetRevision: main
+    path: app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nginx-demo
+  syncPolicy:
+    automated:
+      prune: true       # supprime du cluster ce qui a ete supprime de Git
+      selfHeal: true    # annule toute modification faite a la main sur le cluster
+    syncOptions:
+      - CreateNamespace=true

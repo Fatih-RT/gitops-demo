@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-index
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <meta charset="UTF-8">
+      <title>Page deployee depuis GitHub avec ArgoCD</title>
+      <style>
+        body { font-family: system-ui, sans-serif; margin: 4rem auto; max-width: 40rem; }
+        code { background: #f0f0f0; padding: 0 .25rem; }
+      </style>
+    </head>
+    <body>
+      <h1>Page deployee depuis GitHub avec ArgoCD</h1>
+      <p>Bienvenue a votre TP GitOps !</p>
+      <p>Source de verite : le depot Git. Toute modification de ce ConfigMap
+         est propagee au cluster par ArgoCD, jamais par un <code>kubectl edit</code>.</p>
+      <p>Version : v2 - ConfigMap monte dans /usr/share/nginx/html/index.html</p>
+    </body>
+    </html>

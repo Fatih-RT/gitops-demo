@@ -1,0 +1,4 @@
+# Dockerfile.vulnerable
+# Image de base obsolete : Node 12 est en fin de vie depuis avril 2022,
+# elle ne recoit plus aucun correctif de securite.
+FROM node:12-alpine

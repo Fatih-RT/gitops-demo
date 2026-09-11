@@ -1,0 +1,26 @@
+# TP3 — Relevé des scans Trivy
+
+Tableau à compléter avec la sortie de `./trivy/scan.sh` exécuté sur la VM Ubuntu.
+Les rapports complets se trouvent dans `trivy/rapports/` (dossier non versionné).
+
+## Décompte par sévérité
+
+| Image | Base | CRITICAL | HIGH | MEDIUM | LOW | Total |
+| --- | --- | --- | --- | --- | --- | --- |
+| node-vulnerable | node:12-alpine | | | | | |
+| node-fixed | node:20-alpine + apk upgrade | | | | | |
+
+Version de Trivy utilisée : `trivy --version` → ...
+Date du scan : ...
+
+## Vulnérabilités critiques de l'image vulnérable
+
+| CVE | Paquet | Version installée | Version corrigée | Commentaire |
+| --- | --- | --- | --- | --- |
+| | | | | |
+
+## Analyse
+
+- Ce que la mise à jour de la base corrige :
+- Ce qui reste après correction, et pourquoi (`will_not_fix`, pas de correctif amont) :
+- Décision prise pour le résiduel (acceptation documentée, changement de base, suppression du paquet) :

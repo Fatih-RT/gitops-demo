@@ -1,0 +1,66 @@
+name: Scan de sécurité (Trivy)
+
+# Shift left : les images et les manifests sont analysés à chaque commit,
+# pas au moment de la mise en production.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Une image inchangée devient vulnérable avec le temps : re-scan hebdomadaire.
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  image-vulnerable:
+    name: Image vulnérable (constat, non bloquant)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build node-vulnerable
+        run: docker build -t node-vulnerable -f trivy/Dockerfile.vulnerable trivy/
+
+      - name: Scan node-vulnerable
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: node-vulnerable
+          scanners: vuln
+          format: table
+          exit-code: "0" # on veut voir le rapport, pas casser le job
+
+  image-fixed:
+    name: Image corrigée (bloquant)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build node-fixed
+        run: docker build --no-cache -t node-fixed -f trivy/Dockerfile.fixed trivy/
+
+      - name: Scan node-fixed
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: node-fixed
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true # inutile de bloquer sur ce qui n'a pas de correctif
+          format: table
+          exit-code: "1" # porte de sécurité : le job échoue si une faille corrigeable subsiste
+
+  manifests:
+    name: Manifests Kubernetes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan des erreurs de configuration
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: config
+          scan-ref: app
+          severity: CRITICAL,HIGH
+          format: table
+          exit-code: "0" # à passer à 1 une fois les manifests durcis
