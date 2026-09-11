@@ -40,3 +40,7 @@ ssh_public_key_file: ~/.ssh/id_ed25519.pub
 
 # Depot des TP, clone puis execute dans la VM
 tp_repo_url: https://github.com/Fatih-RT/gitops-demo.git
+
+# Miroir apt utilise dans la VM. archive.ubuntu.com est injoignable depuis le
+# reseau du lab ; le miroir francais repond a plus de 15 Mo/s.
+apt_mirror: https://fr.archive.ubuntu.com/ubuntu

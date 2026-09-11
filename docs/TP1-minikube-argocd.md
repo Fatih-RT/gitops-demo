@@ -113,9 +113,14 @@ Le nœud doit apparaître en `Ready` et tous les pods de `kube-system` en `Runni
 
 ```bash
 kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply --server-side --force-conflicts -n argocd \
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 kubectl get pods -n argocd
 ```
+
+L'option `--server-side` n'est pas un détail. Sans elle, l'installation échoue sur la définition de
+ressource `applicationsets.argoproj.io`, trop volumineuse pour l'annotation que pose un `apply`
+classique. Tout le reste s'installe, ce qui rend la panne trompeuse.
 
 Accès à l'interface, en port-forward local uniquement :
 
@@ -195,3 +200,5 @@ Deux applications `Synced` / `Healthy` dans ArgoCD, et deux Guestbook accessible
 | `docker: permission denied` | groupe `docker` pas encore appliqué | se déconnecter / reconnecter |
 | Pods `ContainerCreating` sans fin | plugins CNI absents | installer les plugins CNI dans `/opt/cni/bin` |
 | `go.mod requires go >= 1.24.9` à la compilation de cri-dockerd | Ubuntu 25.04 fournit Go 1.24.2 | `export GOTOOLCHAIN=auto`, ou installer Go depuis go.dev ; le script d'installation gère les deux cas |
+| `metadata.annotations: Too long` à l'installation d'ArgoCD | la définition de ressource `applicationsets` dépasse la limite d'annotation d'un `apply` classique | ajouter `--server-side --force-conflicts` |
+| `apt` reste bloqué sur le téléchargement | `archive.ubuntu.com` injoignable depuis le réseau du lab, ports 80 et 443 | basculer les dépôts sur `https://fr.archive.ubuntu.com/ubuntu` |

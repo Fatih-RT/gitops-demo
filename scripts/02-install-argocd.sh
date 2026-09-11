@@ -7,7 +7,12 @@ echo "==> Namespace argocd"
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 
 echo "==> Installation d'ArgoCD"
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+# --server-side est obligatoire ici : la definition de ressource
+# applicationsets.argoproj.io depasse la limite de 262144 octets imposee a
+# l'annotation last-applied-configuration qu'ecrit un apply classique.
+# Sans cette option, l'installation echoue sur cette seule ressource.
+kubectl apply --server-side --force-conflicts -n argocd \
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 echo "==> Attente du demarrage des pods (jusqu'a 5 minutes)"
 kubectl wait --for=condition=available --timeout=300s deployment --all -n argocd

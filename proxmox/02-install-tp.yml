@@ -10,6 +10,23 @@
       ansible.builtin.wait_for_connection:
         timeout: 600
 
+    - name: Vérifier la présence du fichier de dépôts au format deb822
+      ansible.builtin.stat:
+        path: /etc/apt/sources.list.d/ubuntu.sources
+      register: apt_sources
+
+    - name: Utiliser un miroir joignable, en HTTPS
+      # Sur le réseau du lab, archive.ubuntu.com ne répond ni sur le port 80 ni
+      # sur le 443 : apt reste bloqué indéfiniment sur le téléchargement. Le
+      # miroir français répond, et HTTPS protège au passage le transport des
+      # paquets, ce qui est la bonne pratique en environnement DevSecOps.
+      become: true
+      ansible.builtin.replace:
+        path: /etc/apt/sources.list.d/ubuntu.sources
+        regexp: '^URIs: https?://(?:archive|security)\.ubuntu\.com/ubuntu'
+        replace: "URIs: {{ apt_mirror }}"
+      when: apt_sources.stat.exists
+
     - name: Installer git
       become: true
       ansible.builtin.apt:
